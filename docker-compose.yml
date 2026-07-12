@@ -1,0 +1,23 @@
+services:
+  nice-ocr:
+    build:
+      context: .
+    image: nice-ocr:local
+    container_name: nice-ocr
+    platform: linux/amd64
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: file:/data/nice-ocr.db
+      STORAGE_DIR: /data/storage
+      OCR_LAYOUT_URL: http://127.0.0.1:8077
+      ENABLE_OCR_LAYOUT: "1"
+      # Generate with: openssl rand -base64 32
+      PROVIDER_KEY_ENCRYPTION_KEY: ${PROVIDER_KEY_ENCRYPTION_KEY:-}
+    volumes:
+      - nice-ocr-data:/data
+    restart: unless-stopped
+
+volumes:
+  nice-ocr-data:

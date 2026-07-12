@@ -1,0 +1,8 @@
+# 本地 PaddleOCR 版面服务依赖。Windows + Python 3.10~3.12 CPU 环境：
+#   python -m pip install -r requirements.txt
+# 首次调用 /layout 会自动下载 PP-OCR 模型（数十 MB）。
+paddlepaddle==3.0.0
+paddleocr==3.0.0
+fastapi>=0.110
+uvicorn>=0.29
+pillow>=10

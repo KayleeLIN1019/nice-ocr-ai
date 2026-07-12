@@ -1,0 +1,13 @@
+.next
+node_modules
+storage
+out
+build
+dist
+coverage
+public
+pnpm-lock.yaml
+*.db
+*.db-*
+*.tsbuildinfo
+next-env.d.ts

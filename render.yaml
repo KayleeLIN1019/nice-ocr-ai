@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: nice-ocr-demo
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: corepack enable && corepack prepare pnpm@11.8.0 --activate && pnpm install --frozen-lockfile && pnpm db:generate && pnpm build
+    startCommand: mkdir -p data storage && pnpm db:push && pnpm db:seed && pnpm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      - key: HOSTNAME
+        value: 0.0.0.0
+      - key: DATABASE_URL
+        value: file:./data/demo.db
+      - key: STORAGE_DIR
+        value: ./storage
+      - key: ENABLE_OCR_LAYOUT
+        value: "0"

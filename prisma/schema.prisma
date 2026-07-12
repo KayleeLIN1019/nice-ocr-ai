@@ -1,0 +1,361 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Batch {
+  id                   String           @id @default(cuid())
+  name                 String
+  notes                String?
+  status               String           @default("draft")
+  strategy             String           @default("balanced")
+  approvalMode         String           @default("hybrid")
+  primaryProviderKey   String?
+  primaryModelId       String?
+  secondaryProviderKey String?
+  secondaryModelId     String?
+  exportTemplateId     String?
+  scenarioId           String?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  // 审核收口/封批时间；null=未封批。独立字段，不复用 status，避免与识别流水线状态语义冲突。
+  closedAt             DateTime?
+  documents            Document[]
+  jobs                 RecognitionJob[]
+  rows                 RecognitionRow[]
+  exports              ExportRecord[]
+  monthlyBatchItems    MonthlyBatchItem[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model MonthlyBatch {
+  id        String             @id @default(cuid())
+  name      String
+  month     String
+  notes     String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  items     MonthlyBatchItem[]
+
+  @@index([month])
+  @@index([createdAt])
+}
+
+model MonthlyBatchItem {
+  id             String       @id @default(cuid())
+  monthlyBatchId String
+  batchId        String
+  monthlyBatch   MonthlyBatch @relation(fields: [monthlyBatchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  batch          Batch        @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  createdAt      DateTime     @default(now())
+
+  @@unique([monthlyBatchId, batchId])
+  @@index([batchId])
+  @@index([monthlyBatchId])
+}
+
+model Document {
+  id              String              @id @default(cuid())
+  batchId         String
+  batch           Batch               @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  originalName    String
+  storedPath      String
+  thumbnailPath   String?
+  hash            String
+  mimeType        String
+  sizeBytes       Int
+  width           Int?
+  height          Int?
+  status          String              @default("uploaded")
+  reviewStatus    String              @default("pending")
+  tag             String?
+  // 上传来源溯源：sourceType=image|pdf|zip-image|zip-pdf；sourceFile=原始上传文件名；
+  // sourceEntry=ZIP 内条目路径；pageNumber/pageCount=PDF(或 zip 内 PDF)的页码/总页数。
+  sourceType      String              @default("image")
+  sourceFile      String?
+  sourceEntry     String?
+  pageNumber      Int?
+  pageCount       Int?
+  riskLevel       String              @default("low")
+  riskReasonsJson String              @default("[]")
+  // 人工处理计时：首次在审核台打开记 reviewStartedAt；全部行确认收口记 reviewCompletedAt。
+  // 两者皆有时差即该单的人工处理时长，用于看板统计单均/总处理时长。历史数据为 null=不计入。
+  reviewStartedAt   DateTime?
+  reviewCompletedAt DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  jobs            RecognitionJob[]
+  attempts        ExtractionAttempt[]
+  rows            RecognitionRow[]
+
+  @@unique([hash, batchId])
+  @@index([batchId, status])
+  @@index([riskLevel])
+}
+
+model RecognitionJob {
+  id           String              @id @default(cuid())
+  batchId      String
+  documentId   String
+  batch        Batch               @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  document     Document            @relation(fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  type         String              @default("extract")
+  status       String              @default("queued")
+  priority     Int                 @default(100)
+  attemptsMade Int                 @default(0)
+  maxAttempts  Int                 @default(3)
+  nextRunAt    DateTime            @default(now())
+  lockedAt     DateTime?
+  lockedBy     String?
+  lastError    String?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  attempts     ExtractionAttempt[]
+
+  @@index([status, nextRunAt, priority])
+  @@index([documentId])
+}
+
+model ExtractionAttempt {
+  id             String           @id @default(cuid())
+  documentId     String
+  jobId          String?
+  document       Document         @relation(fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  job            RecognitionJob?  @relation(fields: [jobId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  providerKey    String
+  model          String
+  promptVersion  String
+  schemaVersion  String
+  strategy       String
+  status         String
+  rawOutputPath  String?
+  parsedJson     String?
+  validationJson String?
+  tokenUsageJson String?
+  costEstimate   Float?
+  latencyMs      Int?
+  startedAt      DateTime         @default(now())
+  completedAt    DateTime?
+  error          String?
+  rows           RecognitionRow[]
+
+  @@index([documentId, status])
+  @@index([providerKey, model])
+}
+
+model RecognitionRow {
+  id                  String               @id @default(cuid())
+  batchId             String
+  documentId          String
+  canonicalAttemptId  String?
+  batch               Batch                @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  document            Document             @relation(fields: [documentId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  canonicalAttempt    ExtractionAttempt?   @relation(fields: [canonicalAttemptId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  rowIndex            Int
+  rawDate             String?
+  normalizedMonth     String?
+  code                String?
+  name                String
+  unit                String?
+  qty                 Float                @default(0)
+  price               Float                @default(0)
+  amount              Float                @default(0)
+  remark              String?
+  extraJson           String               @default("{}")
+  sourceRegionJson    String?
+  status              String               @default("pending")
+  reviewClass         String               @default("pending_review")
+  riskLevel           String               @default("low")
+  riskReasonsJson     String               @default("[]")
+  conflictState       String               @default("none")
+  auditState          String               @default("none")
+  auditNote           String?
+  auditSuggestionJson String?
+  auditedAt           DateTime?
+  deletedAt           DateTime?
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+  observations        ProductObservation[]
+
+  @@index([batchId, status])
+  @@index([documentId])
+  @@index([normalizedMonth])
+  @@index([code])
+  @@index([name])
+  @@index([riskLevel])
+  @@index([auditState])
+  // 审计历史基线(where status=confirmed, deletedAt=null)与 dashboard 已确认/待处理计数。
+  @@index([status, deletedAt])
+}
+
+model ProductObservation {
+  id              String         @id @default(cuid())
+  rowId           String
+  batchId         String
+  documentId      String
+  row             RecognitionRow @relation(fields: [rowId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  rawCode         String?
+  cleanCode       String?
+  name            String
+  unit            String?
+  qty             Float          @default(0)
+  normalizedMonth String?
+  createdAt       DateTime       @default(now())
+
+  @@index([cleanCode])
+  @@index([name])
+  @@index([batchId])
+}
+
+model Product {
+  id          String            @id @default(cuid())
+  code        String?
+  name        String
+  unit        String?
+  // 该产品的代表单价：取历史成交（已确认行 + 导入历史）单价的中位数，用于联想/校验参考。null=暂无价样本。
+  price       Float?
+  aliasesJson String            @default("[]")
+  status      String            @default("active")
+  remark      String?
+  firstSeenAt DateTime?
+  lastSeenAt  DateTime?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  conflicts   ProductConflict[]
+
+  @@index([code])
+  @@index([name])
+}
+
+/**
+ * 导入的历史成交记录：为识别阶段的「历史单价/单位多重校验」提供基线（含单价，Product/ProductObservation 不存价）。
+ * 与系统已确认行一起聚合成历史统计，校验识别出的单价是否离群、单位是否与历史主导不一致。
+ */
+model ProductPriceHistory {
+  id        String   @id @default(cuid())
+  code      String?
+  name      String
+  unit      String?
+  price     Float    @default(0)
+  /** 来源：import=历史导入；预留其它来源。 */
+  source    String   @default("import")
+  createdAt DateTime @default(now())
+
+  @@index([code])
+  @@index([name])
+}
+
+model ProductConflict {
+  id               String    @id @default(cuid())
+  productId        String?
+  product          Product?  @relation(fields: [productId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  type             String
+  severity         String
+  reason           String
+  sourceRowIdsJson String    @default("[]")
+  status           String    @default("open")
+  resolutionNote   String?
+  createdAt        DateTime  @default(now())
+  resolvedAt       DateTime?
+
+  @@index([status, severity])
+  @@index([type])
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  entityType String
+  entityId   String
+  action     String
+  beforeJson String?
+  afterJson  String?
+  actor      String   @default("local")
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model AppSetting {
+  key       String   @id
+  valueJson String
+  updatedAt DateTime @updatedAt
+}
+
+model AiProviderConfig {
+  id              String   @id @default(cuid())
+  providerKey     String   @unique
+  displayName     String
+  protocol        String
+  baseUrl         String?
+  apiKey          String?
+  enabled         Boolean  @default(false)
+  priority        Int      @default(100)
+  temperature     Float?
+  maxOutputTokens Int      @default(2000)
+  systemPrompt    String?
+  userPrompt      String?
+  metadataJson    String   @default("{}")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  models          AiProviderModel[]
+
+  @@index([enabled, priority])
+  @@index([protocol])
+}
+
+model AiProviderModel {
+  id           String           @id @default(cuid())
+  providerId   String
+  provider     AiProviderConfig @relation(fields: [providerId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  modelId      String
+  displayName  String           @default("")
+  enabled      Boolean          @default(true)
+  priority     Int              @default(100)
+  source       String           @default("manual")
+  metadataJson String           @default("{}")
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@unique([providerId, modelId])
+  @@index([providerId, enabled, priority])
+  @@index([source])
+}
+
+/// 规则字典：把分散在校验/冲突/审核/模型异常里的英文码，统一成可在后台编辑的中文释义。
+/// code 为稳定标识(与代码产生侧一致)；label/description/suggestion/severity 可被运营覆盖。
+/// builtin=true 表示由代码默认字典补齐，可「重置为默认」；enabled=false 时该原因在前端被视为不展示。
+model RuleCatalog {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  category    String   @default("validation")
+  label       String
+  description String   @default("")
+  suggestion  String   @default("")
+  severity    String   @default("medium")
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  builtin     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category, sortOrder])
+}
+
+model ExportRecord {
+  id         String   @id @default(cuid())
+  batchId    String?
+  batch      Batch?   @relation(fields: [batchId], references: [id], onDelete: Restrict, onUpdate: Restrict)
+  type       String
+  filterJson String
+  filePath   String
+  rowCount   Int
+  createdAt  DateTime @default(now())
+
+  @@index([type, createdAt])
+}

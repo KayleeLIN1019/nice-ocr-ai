@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.next
+node_modules
+dev.db
+test.db
+storage
+coverage
+*.log
+Dockerfile
+docker-compose*.yml
+tools/ocr-layout/.venv
+tools/ocr-layout/__pycache__
+tools/ocr-layout/**/*.pyc
