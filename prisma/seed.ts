@@ -144,7 +144,7 @@ async function main() {
       status: "completed",
       strategy: "balanced",
       notes:
-        "Anonymized public demo data. Images are redacted table crops; internal product codes are replaced with demo codes.",
+        "Anonymized public demo data. Images show complete item-table crops; personal identifiers, signatures, stamps, and unrelated header fields are omitted. Recognized product codes are retained for review.",
     },
   });
 
