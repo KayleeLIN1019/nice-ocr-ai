@@ -284,6 +284,7 @@ async function main() {
       .map((row) => row.id),
   );
   const documentRisk = new Map<string, "low" | "medium" | "high">();
+  const documentReasons = new Map<string, Set<string>>();
   const documentHasPending = new Set<string>();
 
   for (const seededRow of seededRows) {
@@ -329,6 +330,9 @@ async function main() {
     });
 
     if (isPending) documentHasPending.add(seededRow.documentId);
+    const reasonsForDocument = documentReasons.get(seededRow.documentId) ?? new Set<string>();
+    for (const reason of riskReasons) reasonsForDocument.add(reason);
+    documentReasons.set(seededRow.documentId, reasonsForDocument);
     const currentRisk = documentRisk.get(seededRow.documentId) ?? "low";
     if (riskRank[riskLevel as keyof typeof riskRank] > riskRank[currentRisk]) {
       documentRisk.set(seededRow.documentId, riskLevel);
@@ -345,6 +349,7 @@ async function main() {
         status: "extracted",
         reviewStatus: hasPending ? "pending" : "reviewed",
         riskLevel: documentRisk.get(sample.id) ?? "low",
+        riskReasonsJson: JSON.stringify([... (documentReasons.get(sample.id) ?? new Set<string>())]),
         reviewStartedAt: start,
         reviewCompletedAt: hasPending ? null : new Date(start.getTime() + durationMs),
       },
