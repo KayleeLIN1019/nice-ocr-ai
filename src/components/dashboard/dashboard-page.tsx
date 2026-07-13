@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { formatDateTime, formatNumber } from "@/lib/utils";
 import { apiGet, apiJson } from "@/lib/api/client";
 import { apiPaths } from "@/lib/api/paths";
+import { useLanguage } from "@/lib/i18n";
 import type { RiskLevel } from "@/lib/types";
 
 /** 把毫秒格式化为简洁时长（h/m/s），0 或负值显示破折号。 */
@@ -95,6 +96,7 @@ export function DashboardPage() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+  const { locale } = useLanguage();
   const selectedMonthlyBatchId = searchParams.get("monthlyBatchId") ?? "";
   const { data, isLoading, refetch, isFetching, error } = useQuery<DashboardSummary>({
     queryKey: ["dashboard", selectedMonthlyBatchId || "all"],
@@ -236,10 +238,16 @@ export function DashboardPage() {
           <h1 className="text-xl font-semibold text-foreground">仪表盘</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {data?.scope.type === "monthlyBatch"
-              ? `当前月份批次：${scopeLabel}，包含 ${formatNumber(data.scope.batchCount)} 个批次。`
+              ? locale === "en"
+                ? `Current monthly batch: ${scopeLabel}, containing ${formatNumber(data.scope.batchCount)} batches.`
+                : `当前月份批次：${scopeLabel}，包含 ${formatNumber(data.scope.batchCount)} 个批次。`
               : data?.activeBatch
-                ? `当前批次：${data.activeBatch.name}，系统以风险优先处理待审核数据。`
-                : "暂无批次，请先在批次管理中创建并上传单据。"}
+                ? locale === "en"
+                  ? `Current batch: ${data.activeBatch.name}. The system prioritizes high-risk rows for review.`
+                  : `当前批次：${data.activeBatch.name}，系统以风险优先处理待审核数据。`
+                : locale === "en"
+                  ? "No batches yet. Create a batch and upload documents first."
+                  : "暂无批次，请先在批次管理中创建并上传单据。"}
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -467,7 +475,13 @@ export function DashboardPage() {
               <tr>
                 <td className={tableCellClass} colSpan={5}>
                   <span className="text-muted-foreground">
-                    {isLoading ? "加载中..." : "暂无失败或高风险文档"}
+                    {isLoading
+                      ? locale === "en"
+                        ? "Loading..."
+                        : "加载中..."
+                      : locale === "en"
+                        ? "No failed or high-risk documents"
+                        : "暂无失败或高风险文档"}
                   </span>
                 </td>
               </tr>
