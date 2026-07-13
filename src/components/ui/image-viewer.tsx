@@ -254,38 +254,50 @@ export function ImageViewer({
               transform: `translate(${pan.x}px, ${pan.y}px)`,
             }}
           >
-            <div className="relative origin-top-left" style={{ transform: `scale(${zoom})` }}>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                ref={imageRef}
-                key={src}
-                src={src}
-                alt={alt}
-                draggable={false}
-                className="block h-auto max-w-none select-none rounded border border-border bg-white shadow-sm"
-                onLoad={() => {
-                  updateImageSize();
-                  fitToWindow();
-                }}
-                onError={() => setError(true)}
-              />
-              {imageSize.width && imageSize.height && activeRegion ? (
-                <button
-                  type="button"
-                  aria-label={activeRegion.label ? `定位到${activeRegion.label}` : "定位到识别行"}
-                  onPointerDown={(event) => event.stopPropagation()}
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRegionSelect?.(activeRegion.id);
+            <div
+              className="relative flex-none"
+              style={
+                imageSize.width && imageSize.height
+                  ? { width: imageSize.width * zoom, height: imageSize.height * zoom }
+                  : undefined
+              }
+            >
+              <div
+                className="absolute left-0 top-0 origin-top-left"
+                style={{ transform: `scale(${zoom})` }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  ref={imageRef}
+                  key={src}
+                  src={src}
+                  alt={alt}
+                  draggable={false}
+                  className="block h-auto max-w-none select-none rounded border border-border bg-white shadow-sm"
+                  onLoad={() => {
+                    updateImageSize();
+                    fitToWindow();
                   }}
-                  className={cn(
-                    "pointer-events-auto absolute rounded-sm border-2 bg-warning/25 shadow-[0_0_0_9999px_rgba(15,23,42,0.04)] transition-colors",
-                    activeRegion.tone === "flagged" ? "border-danger-strong bg-danger/20" : "border-warning-strong",
-                  )}
-                  style={regionStyle(activeRegion.box, imageSize)}
-                  title={activeRegion.label}
+                  onError={() => setError(true)}
                 />
-              ) : null}
+                {imageSize.width && imageSize.height && activeRegion ? (
+                  <button
+                    type="button"
+                    aria-label={activeRegion.label ? `定位到${activeRegion.label}` : "定位到识别行"}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      onRegionSelect?.(activeRegion.id);
+                    }}
+                    className={cn(
+                      "pointer-events-auto absolute rounded-sm border-2 bg-warning/25 shadow-[0_0_0_9999px_rgba(15,23,42,0.04)] transition-colors",
+                      activeRegion.tone === "flagged" ? "border-danger-strong bg-danger/20" : "border-warning-strong",
+                    )}
+                    style={regionStyle(activeRegion.box, imageSize)}
+                    title={activeRegion.label}
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
         ) : (
