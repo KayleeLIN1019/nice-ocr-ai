@@ -64,6 +64,15 @@ const translations: Record<string, string> = {
   全部状态: "All statuses",
   全部类型: "All types",
   全部批次: "All batches",
+  "当前批次：": "Current batch: ",
+  "，系统以风险优先处理待审核数据。": " The system prioritizes high-risk rows for review.",
+  策略: "Strategy",
+  新建: "New",
+  确认: "Confirm",
+  行: "Rows",
+  "· 全部": "· All",
+  一键过: "One-click approve",
+  编码被规则清洗: "Code cleaned by rule",
   清空: "Clear",
   操作: "Actions",
   状态: "Status",
@@ -560,6 +569,8 @@ function translateText(value: string, locale: Locale) {
       "Current batch: $1. The system prioritizes high-risk rows for review.",
     )
     .replace(/^当前月份批次：(.+)，包含 (\d+) 个批次。$/, "Current monthly batch: $1, containing $2 batches.")
+    .replace(/^Manual(\d+) · 可过 (\d+) · 抽检 (\d+)$/, "Manual $1 · $2 approvable · $3 spot checks")
+    .replace(/^同名多码 (\d+)$/, "Same name, multiple codes: $1")
     .replace(
       /^已将「(.+)」统一为编码 (.+)，更新 (\d+) \/ (\d+) 行。$/,
       'Unified "$1" to code $2; updated $3 / $4 rows.',
