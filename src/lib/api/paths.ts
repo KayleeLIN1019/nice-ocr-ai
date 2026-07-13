@@ -26,7 +26,8 @@ export const apiPaths = {
   documents: "/api/documents",
   document: (id: string) => `/api/documents/${id}`,
   documentAutoPass: (id: string) => `/api/documents/${id}/auto-pass`,
-  documentImage: (id: string) => `/api/documents/${id}/image`,
+  // Bump this when public demo images are refreshed so browsers do not reuse an older asset.
+  documentImage: (id: string) => `/api/documents/${id}/image?v=20260713`,
   documentRetry: (id: string) => `/api/documents/${id}/retry`,
   documentReviewStart: (id: string) => `/api/documents/${id}/review-start`,
   reviewBulkSuggestions: "/api/review/bulk-suggestions",

@@ -15,7 +15,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ id: string
   return new NextResponse(buffer, {
     headers: {
       "content-type": document.mimeType,
-      "cache-control": "private, max-age=3600",
+      "cache-control": "no-store, max-age=0",
     },
   });
 }

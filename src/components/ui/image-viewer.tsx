@@ -79,6 +79,21 @@ export function ImageViewer({
     setImageSize({ width: img.clientWidth, height: img.clientHeight });
   }, []);
 
+  const fitToWindow = useCallback(() => {
+    const canvas = canvasRef.current;
+    const img = imageRef.current;
+    if (!canvas || !img?.naturalWidth || !img.naturalHeight) return;
+
+    const { width, height } = canvas.getBoundingClientRect();
+    if (!width || !height) return;
+
+    const availableWidth = Math.max(1, width - CANVAS_INSET * 2);
+    const availableHeight = Math.max(1, height - CANVAS_INSET * 2);
+    const fit = Math.min(1, availableWidth / img.naturalWidth, availableHeight / img.naturalHeight);
+    setZoom(Math.max(0.1, Number(fit.toFixed(2))));
+    setPan({ x: 0, y: 0 });
+  }, []);
+
   // 统一缩放入口：以鼠标焦点为锚点缩放（同步调整 pan，使锚点下的内容不动）。
   // anchor 为画布内坐标；缺省时退回视口中心。供按钮、快捷倍数与滚轮共用。
   const zoomTo = useCallback((next: number, anchor?: { x: number; y: number } | null) => {
@@ -193,10 +208,7 @@ export function ImageViewer({
         <button
           type="button"
           aria-label="适应窗口"
-          onClick={() => {
-            setZoom(1);
-            setPan({ x: 0, y: 0 });
-          }}
+          onClick={fitToWindow}
           className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
           <Maximize2 size={15} />
@@ -242,7 +254,7 @@ export function ImageViewer({
               transform: `translate(${pan.x}px, ${pan.y}px)`,
             }}
           >
-            <div className="relative max-h-full max-w-full origin-top-left" style={{ transform: `scale(${zoom})` }}>
+            <div className="relative origin-top-left" style={{ transform: `scale(${zoom})` }}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 ref={imageRef}
@@ -250,8 +262,11 @@ export function ImageViewer({
                 src={src}
                 alt={alt}
                 draggable={false}
-                className="block max-h-full max-w-full select-none rounded border border-border bg-white object-contain shadow-sm"
-                onLoad={updateImageSize}
+                className="block h-auto max-w-none select-none rounded border border-border bg-white shadow-sm"
+                onLoad={() => {
+                  updateImageSize();
+                  fitToWindow();
+                }}
                 onError={() => setError(true)}
               />
               {imageSize.width && imageSize.height && activeRegion ? (
