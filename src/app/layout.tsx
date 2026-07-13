@@ -4,7 +4,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "nice-ocr",
-  description: "智能单据识别与审核工作台公开演示版",
+  description: "AI-powered document recognition and review workspace",
 };
 
 export default function RootLayout({
@@ -13,7 +13,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN" className="h-full antialiased">
+    <html lang="en" className="h-full antialiased" suppressHydrationWarning>
       <body className="min-h-full">
         <AppProviders>{children}</AppProviders>
       </body>

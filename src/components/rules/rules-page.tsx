@@ -131,7 +131,7 @@ function RuleRow({ rule, onChanged }: { rule: RuleCatalogEntry; onChanged: () =>
     "h-8 w-full min-w-32 rounded-md border border-border bg-background px-2 text-xs outline-none focus:border-primary";
 
   return (
-    <tr className="align-top hover:bg-muted/40">
+    <tr data-i18n-system className="align-top hover:bg-muted/40">
       <td className={tableCellClass}>
         <code className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">{rule.code}</code>
       </td>

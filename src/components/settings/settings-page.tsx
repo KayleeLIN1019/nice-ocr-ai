@@ -157,7 +157,7 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div data-i18n-system className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold">设置</h1>
@@ -721,7 +721,7 @@ function NumberField({ label, value, onChange }: { label: string; value: number;
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the visible draft aligned after external settings refreshes
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep an unfocused controlled input synchronized with persisted value
     if (!focused) setDraft(String(value));
   }, [focused, value]);
 
@@ -756,7 +756,7 @@ function OptionalNumberField({ label, value, onChange }: { label: string; value:
   const [focused, setFocused] = useState(false);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep the visible draft aligned after external settings refreshes
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- keep an unfocused controlled input synchronized with persisted value
     if (!focused) setDraft(value == null ? "" : String(value));
   }, [focused, value]);
 

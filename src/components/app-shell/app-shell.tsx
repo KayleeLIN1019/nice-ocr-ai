@@ -6,7 +6,6 @@ import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import {
   AlertTriangle,
-  BadgeCheck,
   Boxes,
   BookCheck,
   Database,
@@ -23,6 +22,7 @@ import { cn } from "@/lib/utils";
 import { apiGet } from "@/lib/api/client";
 import { apiPaths } from "@/lib/api/paths";
 import { SidebarProvider } from "./sidebar-context";
+import { useLanguage } from "@/lib/i18n";
 
 const navGroups = [
   {
@@ -53,6 +53,7 @@ const navGroups = [
 ];
 
 export function AppShell({ children }: { children: React.ReactNode }) {
+  const { locale, toggleLocale } = useLanguage();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   // 折叠时鼠标悬停自动展开（浮层覆盖正文，不挤动布局）。expanded=有效展开态。
@@ -179,10 +180,16 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </nav>
           </div>
           <div className="flex items-center gap-2">
-            <div className="hidden items-center gap-1.5 rounded-md border border-info/30 bg-info-soft px-2.5 py-1.5 text-xs font-medium text-info-strong sm:flex">
-              <BadgeCheck size={14} />
-              公开演示版 · 脱敏数据
-            </div>
+            <button
+              type="button"
+              onClick={toggleLocale}
+              aria-label={locale === "zh" ? "切换为英文" : "Switch to Chinese"}
+              title={locale === "zh" ? "切换为英文" : "Switch to Chinese"}
+              data-i18n-ignore
+              className="rounded-md border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:border-primary hover:text-foreground"
+            >
+              {locale === "zh" ? "EN" : "CN"}
+            </button>
             <Link
               href="/queue"
               title="查看识别队列"
